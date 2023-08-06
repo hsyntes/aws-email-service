@@ -7,6 +7,7 @@ module.exports = class Email {
   constructor(user, url) {
     this.from = process.env.EMAIL_FROM;
     this.to = user.email;
+    this.firstname = user.firstname;
     this.url = url;
   }
 
@@ -28,7 +29,38 @@ module.exports = class Email {
   }
 
   // * Send Email
-  #send() {
-    const html = pug.renderFile(`${__dirname}/../views/email.pug`);
+  async #send(subject, text) {
+    const html = pug.renderFile(`${__dirname}/../views/email.pug`, {
+      subject,
+      firstname: this.firstname,
+      text,
+      url: this.url,
+    });
+
+    await this.createTransport().sendMail({
+      from: `Huseyin Ates <${process.env.EMAIL_FROM}>`,
+      to: this.to,
+      subject,
+      html,
+      text: htmlToText(html),
+    });
+  }
+
+  async sendWelcome() {
+    await this.#send("Wellcome to InstaMERN", "We're glad to have you! 🥳");
+  }
+
+  async sendResetPassword() {
+    await this.#send(
+      "Reset your password",
+      "We received a request to reset your password for your InstaMERN account. To proceed with the password reset, please click on the link below."
+    );
+  }
+
+  async sendResetEmail() {
+    await this.#send(
+      "Reset your email",
+      "We received a request to reset your email for your InstaMERN account. To proceed with the email reset, pelase click on the lonk below."
+    );
   }
 };
