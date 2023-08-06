@@ -9,9 +9,11 @@
     "express-rate-limit": "^6.9.0",
     "helmet": "^7.0.0",
     "hpp": "^0.2.3",
+    "html-to-text": "^9.0.5",
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.4.2",
     "nodemailer": "^6.9.4",
+    "pug": "^3.0.2",
     "validator": "^13.11.0",
     "xss-clean": "^0.1.4"
   },

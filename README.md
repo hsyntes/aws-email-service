@@ -15,7 +15,13 @@ Before you begin, ensure you have the following:
 
 ## Dependencies
 
-`npm install aws-sdk nodemailer`
+- Required
+
+  `npm install aws-sdk nodemailer`
+
+- Optional
+
+  `npm install html-to-text pug`
 
 ## Configuration
 

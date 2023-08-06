@@ -5,6 +5,7 @@ const helmet = require("helmet");
 const hpp = require("hpp");
 const xss = require("xss-clean");
 const userRouters = require("./routers/userRouters");
+const ErrorProvider = require("./classes/ErrorProvider");
 const errorController = require("./controllers/errorController");
 
 const app = express();
@@ -21,13 +22,18 @@ const limit = expressRateLimit({
 app.use(express.json({ limit }));
 
 // * Security
-app.use(expressMongoSanitize);
+app.use(expressMongoSanitize());
 app.use(helmet());
 app.use(hpp());
 app.use(xss());
 
 // * Routers
 app.use("/api/v1/users", userRouters);
+
+// * Unsupported URLs
+app.use("*", (req, res, next) =>
+  next(new ErrorProvider(404, "fail", `Unsupported URL: ${req.originalUrl}`))
+);
 
 // * Error handling
 app.use(errorController);

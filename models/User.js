@@ -5,6 +5,22 @@ const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
+    firstname: {
+      type: String,
+      minlength: [2, "Firstname cannot be shorter than 2 characters."],
+      maxlength: [24, "Firstname cannot be longer than 24 characters."],
+      required: true,
+      trim: true,
+    },
+
+    lastname: {
+      type: String,
+      minlength: [2, "Lastname cannot be shorter than 2 characters."],
+      mixlength: [24, "Lastname cannot be longer than 24 characters."],
+      required: true,
+      trim: true,
+    },
+
     username: {
       type: String,
       minlength: [3, "@username cannot be shorter than 3 characters."],
@@ -36,8 +52,8 @@ const userSchema = new mongoose.Schema(
       minlength: [8, "Password cannot be shorter than 8 characters."],
       maxlength: [32, "Password is too long."],
       required: [true, "Please confirm your password."],
-      validator: {
-        validate: function (value) {
+      validate: {
+        validator: function (value) {
           return value === this.password;
         },
 
@@ -50,15 +66,17 @@ const userSchema = new mongoose.Schema(
 );
 
 // * Document Middleware
-userSchema.pre("save", function (next) {
-  // Encrypted password
-  this.password = crypto.createHash(this.password, 12);
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
+  this.password = await bcrypt.hash(this.password, 12);
   this.passwordConfirm = undefined;
 
   next();
 });
 
 // * Instance Methods
+
 // * Checking candidate and real passsword
 userSchema.methods.isPasswordCorrect = async (candidate, password) =>
   await bcrypt.compare(candidate, password);

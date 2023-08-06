@@ -1,5 +1,5 @@
-const { JsonWebTokenError, TokenExpiredError } = require("jsonwebtoken");
 const ErrorProvider = require("../classes/ErrorProvider");
+const { JsonWebTokenError, TokenExpiredError } = require("jsonwebtoken");
 
 // ! 409: Duplicate error
 const uniqueError = (err) => {
@@ -35,6 +35,10 @@ const tokenExpiredError = () =>
   );
 
 module.exports = async (err, req, res, next) => {
+  // res.status(500).json({
+  //   err,
+  // });
+
   if (process.env.NODE_ENV === "production") {
     if (err.code === 11000) err = uniqueError(err);
     if (err.name === "ValidationError") err = validationError(err);
@@ -49,4 +53,6 @@ module.exports = async (err, req, res, next) => {
     status: err.status,
     message: err.message,
   });
+
+  next();
 };
