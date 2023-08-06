@@ -106,6 +106,7 @@ exports.login = async (req, res, next) => {
   }
 };
 
+// * Sending rest link to user's email address
 exports.forgotPassword = async (req, res, next) => {
   try {
     if (!req.body.email)
@@ -161,6 +162,7 @@ exports.forgotPassword = async (req, res, next) => {
   }
 };
 
+// * Resetting password
 exports.resetPassword = async (req, res, next) => {
   try {
     if (!req.params.token)

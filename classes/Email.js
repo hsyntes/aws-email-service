@@ -55,11 +55,4 @@ module.exports = class Email {
       "We received a request to reset your password for your MyApp account. To proceed with the password reset, please click on the link below."
     );
   }
-
-  async sendResetEmail() {
-    await this.#send(
-      "Reset your email",
-      "We received a request to reset your email for your MyApp account. To proceed with the email reset, pelase click on the lonk below."
-    );
-  }
 };
