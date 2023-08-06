@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, "Email Address is required."],
-      validator: [validator.isEmail, "Please type a valid email address."],
+      validate: [validator.isEmail, "Please type a valid email address."],
       trim: true,
       unique: true,
     },
@@ -61,6 +61,9 @@ const userSchema = new mongoose.Schema(
       },
       trim: true,
     },
+
+    passwordResetToken: String,
+    passwordResetTokenExpiresIn: Date,
   },
   { versionKey: false }
 );
@@ -80,6 +83,19 @@ userSchema.pre("save", async function (next) {
 // * Checking candidate and real passsword
 userSchema.methods.isPasswordCorrect = async (candidate, password) =>
   await bcrypt.compare(candidate, password);
+
+userSchema.methods.generatePasswordResetToken = function () {
+  const token = crypto.randomBytes(32).toString("hex");
+
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  this.passwordResetTokenExpiresIn = new Date(Date.now()) + 10 * 60 * 1000;
+
+  return token;
+};
 
 const User = mongoose.model("User", userSchema);
 

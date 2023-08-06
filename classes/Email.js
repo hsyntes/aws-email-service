@@ -5,7 +5,6 @@ const { htmlToText } = require("html-to-text");
 
 module.exports = class Email {
   constructor(user, url) {
-    this.from = process.env.EMAIL_FROM;
     this.to = user.email;
     this.firstname = user.firstname;
     this.url = url;
@@ -23,7 +22,7 @@ module.exports = class Email {
       port: process.env.MAILTRAP_PORT,
       auth: {
         user: process.env.MAILTRAP_USERNAME,
-        password: process.env.MAILTRAP_PASSWORD,
+        pass: process.env.MAILTRAP_PASSWORD,
       },
     });
   }
@@ -38,7 +37,7 @@ module.exports = class Email {
     });
 
     await this.createTransport().sendMail({
-      from: `Huseyin Ates <${process.env.EMAIL_FROM}>`,
+      from: `Huseyin Ates <${process.env.EMAIL}>`,
       to: this.to,
       subject,
       html,
@@ -47,20 +46,20 @@ module.exports = class Email {
   }
 
   async sendWelcome() {
-    await this.#send("Wellcome to InstaMERN", "We're glad to have you! 🥳");
+    await this.#send("Wellcome to MyApp", "We're glad to have you! 🥳");
   }
 
   async sendResetPassword() {
     await this.#send(
       "Reset your password",
-      "We received a request to reset your password for your InstaMERN account. To proceed with the password reset, please click on the link below."
+      "We received a request to reset your password for your MyApp account. To proceed with the password reset, please click on the link below."
     );
   }
 
   async sendResetEmail() {
     await this.#send(
       "Reset your email",
-      "We received a request to reset your email for your InstaMERN account. To proceed with the email reset, pelase click on the lonk below."
+      "We received a request to reset your email for your MyApp account. To proceed with the email reset, pelase click on the lonk below."
     );
   }
 };

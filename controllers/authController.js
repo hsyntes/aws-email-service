@@ -1,6 +1,8 @@
+const Email = require("../classes/Email");
 const ErrorProvider = require("../classes/ErrorProvider");
 const User = require("../models/User");
 const jsonwebtoken = require("jsonwebtoken");
+const validator = require("validator");
 
 // * Saving & Sending token
 const sendToken = (res, statusCode, user, message) => {
@@ -32,11 +34,23 @@ const sendToken = (res, statusCode, user, message) => {
 exports.signup = async (req, res, next) => {
   try {
     const user = await User.create({
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
       username: req.body.username,
       email: req.body.email,
       password: req.body.password,
       passwordConfirm: req.body.passwordConfirm,
     });
+
+    try {
+      await new Email(
+        user,
+        `${req.protocol}://${req.get("host")}`
+      ).sendWelcome();
+    } catch (e) {
+      // * Ignore email verification error and proceed
+      console.error(`Email verification error: ${e}`);
+    }
 
     sendToken(res, 201, user, "You've signed up successfully!");
   } catch (e) {
@@ -77,7 +91,116 @@ exports.login = async (req, res, next) => {
     if (!(await user.isPasswordCorrect(req.body.password, user.password)))
       return next(new ErrorProvider(401, "fail", "Password doesn't match."));
 
+    try {
+      await new Email(
+        user,
+        `${req.protocol}://${req.get("host")}:8000`
+      ).sendWelcome();
+    } catch (e) {
+      // * Ignore email verification error and proceed
+    }
+
     sendToken(res, 200, user, "Welcome back!");
+  } catch (e) {
+    next(e);
+  }
+};
+
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    if (!req.body.email)
+      return next(
+        new ErrorProvider(
+          403,
+          "fail",
+          "Please type your email address to reset your password."
+        )
+      );
+
+    const { email } = req.body;
+
+    if (!validator.isEmail(email))
+      return next(
+        new ErrorProvider(403, "fail", "Please type a valid email address.")
+      );
+
+    const user = await User.findOne({ email });
+
+    if (!user)
+      return next(
+        new ErrorProvider(404, "fail", "Not found user with that email.")
+      );
+
+    const token = await user.generatePasswordResetToken();
+    await user.save({ validateBeforeSave: false });
+
+    try {
+      await new Email(
+        user,
+        `${req.protovol}://${req.get("host")}/reset-password/${token}`
+      ).sendResetPassword();
+
+      res.status(200).json({
+        status: "success",
+        message: "The password reset link has ben sent to your email address.",
+      });
+    } catch (e) {
+      user.passwordResetToken = undefined;
+      user.passwordResetTokenExpiresIn = undefined;
+
+      next(
+        new ErrorProvider(
+          500,
+          "error",
+          "Password reset link couldn't sent to your email address. Try again later."
+        )
+      );
+    }
+  } catch (e) {
+    next(e);
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  try {
+    if (!req.params.token)
+      return next(
+        new ErrorProvider(
+          404,
+          "fail",
+          "Page not found or the reset link has expired."
+        )
+      );
+
+    const user = await User.findOne({
+      passwordResetToken: crypto
+        .createHash("sha256")
+        .update(req.params.token)
+        .digest("hex"),
+
+      passwordResetTokenExpiresIn: { $gt: Date.now() },
+    });
+
+    if (!user)
+      return next(
+        new ErrorProvider(
+          404,
+          "fail",
+          "The password reset link has expired or has broken. Please try again later."
+        )
+      );
+
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+
+    user.passwordResetToken = undefined;
+    user.passwordResetTokenExpiresIn = undefined;
+
+    await user.save();
+
+    res.clearCookie("jsonwebtoken");
+
+    sendToken(res, 200, user, "Your password has been updated successfully.");
   } catch (e) {
     next(e);
   }
